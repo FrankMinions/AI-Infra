@@ -362,4 +362,17 @@ if self.disaggregation_mode == DisaggregationMode.PREFILL:
         self.disagg_prefill_bootstrap_queue.queue
     )
 ```
-而`prefill_inflight_queue_reqs`表示Prefill侧在途即正在向Decode节点做KV Transfer的队列请求数，但在`0.5.9`版本中可能由于实现问题该值一直为0。在Decode节点可以通过`decode_transfer_queue_reqs`获取到正确的数值。
+而`prefill_inflight_queue_reqs`表示Prefill侧在途即正在向Decode节点做KV Transfer的队列请求数（Prefill forward已经结束），详见代码srt/disaggregation/prefill.py：
+```python
+for i, (req, next_token_id) in enumerate(
+            zip(batch.reqs, next_token_ids, strict=True)
+        ):
+    if req.is_chunked <= 0:
+        req.time_stats.set_prefill_finished_time()
+
+        # There is no output_ids for prefill
+        req.output_ids.append(next_token_id)
+        maybe_cache_unfinished_req(req, self.tree_cache)
+        self.disagg_prefill_inflight_queue.append(req)
+```
+但在`0.5.9`版本中可能由于实现问题该值一直为0。在Decode节点可以通过`decode_transfer_queue_reqs`获取到正确的数值。
