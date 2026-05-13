@@ -355,4 +355,11 @@ curl -sS -H "Authorization: Bearer xxx" "http://127.0.0.1:9001/v1/loads"
     }
 }
 ```
-由于PD disagg实现差异，不能直接通过`num_running_reqs`和`num_waiting_reqs`获取Prefill侧正在running和waiting的请求数。然而，`prefill_prealloc_queue_reqs`往往反映的是Decode侧的压力情况，它指的是Prefill侧`Bootstrap`队列里的请求数，当Decode的KV Slot可以成功对其预分配时才会认为`Bootstrap`成功。如果该队列排队请求数较多，说明Decode侧负载较大。而`prefill_inflight_queue_reqs`表示Prefill侧在途即正在向Decode节点做KV Transfer的队列请求数，但在`0.5.9`版本中可能由于实现问题该值一直为0。在Decode节点可以通过`decode_transfer_queue_reqs`获取到正确的数值。
+由于PD disagg实现差异，不能直接通过`num_running_reqs`和`num_waiting_reqs`获取Prefill侧正在running和waiting的请求数。然而，`prefill_prealloc_queue_reqs`往往反映的是Decode侧的压力情况，它指的是Prefill侧`Bootstrap`队列里的请求数，当Decode的KV Slot可以成功对其预分配时才会认为`Bootstrap`成功。如果该队列排队请求数较多，说明Decode侧负载较大，代码里有迹可循：
+```python
+if self.disaggregation_mode == DisaggregationMode.PREFILL:
+    self.stats.num_prefill_prealloc_queue_reqs = len(
+        self.disagg_prefill_bootstrap_queue.queue
+    )
+```
+而`prefill_inflight_queue_reqs`表示Prefill侧在途即正在向Decode节点做KV Transfer的队列请求数，但在`0.5.9`版本中可能由于实现问题该值一直为0。在Decode节点可以通过`decode_transfer_queue_reqs`获取到正确的数值。
