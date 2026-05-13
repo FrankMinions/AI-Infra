@@ -375,4 +375,4 @@ for i, (req, next_token_id) in enumerate(
         maybe_cache_unfinished_req(req, self.tree_cache)
         self.disagg_prefill_inflight_queue.append(req)
 ```
-但在`0.5.9`版本中可能由于实现问题该值一直为0。在Decode节点可以通过`decode_transfer_queue_reqs`获取到正确的数值。
+但在`0.5.9`版本中可能由于实现问题该值一直为0（Prometheus监控上采集的数值为0），`0.5.10`版本已解决。在Decode节点可以通过`decode_transfer_queue_reqs`获取到正确的数值。
